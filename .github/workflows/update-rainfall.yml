@@ -1,0 +1,37 @@
+name: Update Rainfall Feed
+
+on:
+  schedule:
+    # Runs daily at 12:00 UTC (7am Central). Google Calendar will pick up
+    # the change on its own polling schedule (usually within a day).
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-feed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate rainfall.ics
+        run: python generate_ics.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rainfall.ics
+          git diff --staged --quiet || git commit -m "Update rainfall feed"
+          git push
